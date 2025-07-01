@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>BGR 与 HSV 色彩模型介绍</title>
+    <style>
+        body {
+            font-family: "Microsoft Yahei", sans-serif;
+            margin: 2em;
+            line-height: 1.7;
+        }
+        h1, h2 {
+            color: #2a5caa;
+        }
+        code {
+            background-color: #f2f2f2;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .color-box {
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+            border: 1px solid #aaa;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <h1>BGR 与 HSV 颜色模型原理及转换方法</h1>
+
+    <h2>一、什么是 BGR（或 RGB）颜色模型？</h2>
+    <p>
+        BGR 是图像中最常见的颜色表示方法，每个像素由三个通道组成：蓝色（Blue）、绿色（Green）、红色（Red）。在 OpenCV 中，默认使用 <strong>BGR</strong> 顺序表示像素值。
+    </p>
+    <p>
+        每个通道的取值范围是 0~255。三色混合决定了这个像素的最终颜色。例如：
+    </p>
+    <ul>
+        <li><code>[255, 0, 0]</code> 表示蓝色</li>
+        <li><code>[0, 255, 0]</code> 表示绿色</li>
+        <li><code>[0, 0, 255]</code> 表示红色</li>
+        <li><code>[255, 255, 255]</code> 表示白色</li>
+    </ul>
+
+    <h2>二、什么是 HSV 颜色模型？</h2>
+    <p>
+        HSV 是从人类感知角度出发的颜色模型，分为三个通道：
+    </p>
+    <ul>
+        <li><strong>H（Hue）色相</strong>：表示颜色的种类，范围 0~179（在 OpenCV 中）</li>
+        <li><strong>S（Saturation）饱和度</strong>：表示颜色的纯度，0 表示灰色，255 表示纯色</li>
+        <li><strong>V（Value）亮度</strong>：表示明暗程度，0 是黑，255 是最亮</li>
+    </ul>
+    <p>HSV 更适合用于颜色识别、分割、目标检测等计算机视觉任务。</p>
+
+    <h2>三、为什么 HSV 更适合图像识别？</h2>
+    <ul>
+        <li>HSV 将颜色（H）与亮度（V）分离，能更好地应对光照变化</li>
+        <li>HSV 中“颜色种类”由 H 决定，容易定义颜色范围，如“黄”是 H=20~30</li>
+        <li>HSV 在识别阳光、血条、植物等界面元素时更鲁棒</li>
+    </ul>
+
+    <h2>四、BGR 与 HSV 的相互转换</h2>
+    <p>在 OpenCV 中，可以使用以下代码进行转换：</p>
+
+    <h3>1. BGR 转 HSV：</h3>
+    <pre><code>hsv = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2HSV)</code></pre>
+
+    <h3>2. HSV 转 BGR：</h3>
+    <pre><code>bgr = cv2.cvtColor(hsv_img, cv2.COLOR_HSV2BGR)</code></pre>
+
+    <h3>注意事项：</h3>
+    <ul>
+        <li>转换后图像的像素值结构发生变化，通道意义改变</li>
+        <li>HSV 图像不建议直接展示，建议先转回 BGR</li>
+        <li>HSV 图像更适合做颜色筛选（如用 <code>cv2.inRange()</code>）</li>
+    </ul>
+
+    <h2>五、HSV 颜色匹配示例</h2>
+    <p>查找“黄色”区域的 HSV 范围可以设置为：</p>
+    <pre><code>
+lower_yellow = np.array([20, 100, 100])
+upper_yellow = np.array([30, 255, 255])
+mask = cv2.inRange(hsv_img, lower_yellow, upper_yellow)
+    </code></pre>
+
+    <p>这将提取所有“色相为黄、饱和度较高、亮度较亮”的像素区域。</p>
+
+    <h2>六、总结</h2>
+    <ul>
+        <li>BGR 更适合显示和保存图像</li>
+        <li>HSV 更适合识别、提取、颜色分析</li>
+        <li>实际项目中，常常 <strong>在 BGR 图中转换为 HSV 处理后再转回 BGR 显示</strong></li>
+    </ul>
+
+    <p>建议在图像识别项目中熟练掌握 BGR 与 HSV 的转换与使用，将显著提升图像处理能力。</p>
+</body>
+</html>
