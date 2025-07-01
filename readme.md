@@ -6,3 +6,5 @@ python -m venv venv
 ## 激活虚拟环境
 .\venv\Scripts\activate
 
+## 在激活的环境下，安装需要的库
+pip install -r requirements.txt
