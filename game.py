@@ -25,6 +25,7 @@ class PlantsVsZombies:
         self.is_game_won = False
         self.is_game_lost = False
         self.sun_value = 0
+        self.plant_menu_drawn = False  # 记录植物菜单区域是否已经绘制
 
         # 定义窗口激活状态的特征区域
         self.active_region = {
@@ -49,6 +50,16 @@ class PlantsVsZombies:
             "width": 52,
             "height": 20
         }
+
+        # 定义10个植物的菜单栏区域
+        self.plant_menu_region = []
+        for i in range(1, 11):
+            self.plant_menu_region.append({
+                "x": 86 + (i - 1) * 51,
+                "y": 30,
+                "width": 49,
+                "height": 69
+            })
 
 
     # 查找游戏特征图片，找到则保存其坐标，找不到则提示用户核查原因，并返回False
@@ -135,6 +146,8 @@ class PlantsVsZombies:
                 if success:
                     print(f"🎮 游戏区域截图已保存: {self.game_width}x{self.game_height}")
                     print(f"📍 起始坐标: ({self.start_x}, {self.start_y})")
+                    # 重置植物菜单区域绘制状态，因为截图已更新
+                    self.reset_plant_menu_drawn()
                 else:
                     print("❌ 保存游戏截图失败")
                 
@@ -429,7 +442,37 @@ class PlantsVsZombies:
             return -1
 
 
-
+    # 使用OpenCV将10个植物的菜单栏区域用矩形框出来
+    def draw_plant_menu_region(self):
+        # 检查是否已经绘制过矩形框
+        if self.plant_menu_drawn:
+            print("植物菜单区域已经绘制过，跳过重复绘制")
+            return
+        
+        # 检查是否存在游戏截图
+        if self.game_screenshot is None:
+            print("游戏截图不存在，无法绘制植物菜单区域")
+            return
+        
+        # 绘制所有植物菜单区域的矩形框
+        for i, region in enumerate(self.plant_menu_region):
+            cv2.rectangle(self.game_screenshot, 
+                         (region['x'], region['y']), 
+                         (region['x'] + region['width'], region['y'] + region['height']), 
+                         (0, 0, 255), 2)
+            print(f"绘制植物菜单区域 {i+1}: x={region['x']}, y={region['y']}, w={region['width']}, h={region['height']}")
+        
+        # 标记为已绘制
+        self.plant_menu_drawn = True
+        print("植物菜单区域绘制完成")
+        
+        # 保存绘制后的图像
+        cv2.imwrite("game_with_plant_menu_regions.png", self.game_screenshot)
+    
+    # 重置植物菜单区域绘制状态
+    def reset_plant_menu_drawn(self):
+        self.plant_menu_drawn = False
+        print("植物菜单区域绘制状态已重置")
 
 
 

@@ -49,6 +49,9 @@ def main():
             print("当前阳光值: {}".format(sun_value))
         else:
             print("阳光值读取失败，使用上次的值: {}".format(pvz_game.sun_value))
+        
+        # 测试绘制植物菜单区域
+        pvz_game.draw_plant_menu_region()
 
 
 
