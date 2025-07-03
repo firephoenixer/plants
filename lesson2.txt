@@ -2,5 +2,5 @@
 2. 熟悉BGR和HSV两种颜色表示的联系和区别；
 3. 创建游戏逻辑类（手动）
 4. 修改main.py，创建基本游戏逻辑架构
-5. 完成find_game_feature函数
-
+5. 完成find_game_feature等函数
+6. 安装pyautogui库，并使用其控制鼠标

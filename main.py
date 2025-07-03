@@ -1,6 +1,7 @@
 import os
 import time
 import game
+import pyautogui
 
 def main():
     """主程序入口"""
@@ -17,6 +18,19 @@ def main():
         else:
             print("游戏未打开，程序结束，请核查原因...")
             break
+
+        # 现在开始查找游戏的active_region区域的灰色像素点，返回其数量
+        # 注意：HSV中V值范围是0-255，所以百分比需要转换
+        # 检测浅灰色像素 (V:80% = 204)
+        light_gray_count = pvz_game.get_pixel_count(pvz_game.game_screenshot, pvz_game.active_region, (0, 0, 204))
+        print("浅灰色像素点数量: {}".format(light_gray_count))
+        if light_gray_count > 0:
+            print("游戏未激活，移动鼠标点击标题区域，激活游戏...")
+            # 移动鼠标点击标题区域，激活游戏
+            pyautogui.moveTo(pvz_game.start_x + 60, pvz_game.start_y + 10)
+            pyautogui.click()
+        else:
+            print("游戏窗口处于激活状态...")
 
     
 

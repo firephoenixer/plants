@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSV颜色拾取器 - 本地版</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 2.5em;
+        }
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+        .upload-area.dragover {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+            transform: scale(1.02);
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .upload-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            margin-top: 10px;
+        }
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        #imageCanvas {
+            max-width: 100%;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            margin: 20px 0;
+            cursor: crosshair;
+            transition: border-color 0.3s ease;
+        }
+        #imageCanvas:hover {
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+        .color-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .color-sample {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            vertical-align: middle;
+            transition: transform 0.3s ease;
+        }
+        .color-sample:hover {
+            transform: scale(1.1);
+        }
+        .color-values {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .color-values div {
+            margin: 8px 0;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .analysis-result {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .dominant-colors {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .color-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .color-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .color-item .color-box {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            margin: 0 auto 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s ease;
+        }
+        .color-item .color-box:hover {
+            transform: scale(1.1);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            height: 8px;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+            .dominant-colors {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 HSV颜色分析器</h1>
+        
+        <div class="upload-area" id="uploadArea">
+            <p style="font-size: 18px; margin-bottom: 10px;">📸 拖拽图片到此处或点击上传</p>
+            <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px;">支持 JPG、PNG、GIF 等格式</p>
+            <button class="upload-btn" onclick="document.getElementById('imageInput').click()">
+                选择图片
+            </button>
+            <input type="file" id="imageInput" accept="image/*">
+        </div>
+        
+        <canvas id="imageCanvas" style="display: none;"></canvas>
+        
+        <div class="color-info" id="colorInfo" style="display: none;">
+            <h3>🎯 点击像素颜色信息</h3>
+            <div class="color-sample" id="colorSample"></div>
+            <div class="color-values" id="colorValues">
+                <div>HSV: <span id="hsvValues">-</span></div>
+                <div>RGB: <span id="rgbValues">-</span></div>
+                <div>HEX: <span id="hexValues">-</span></div>
+            </div>
+        </div>
+        
+        <div class="analysis-result" id="analysisResult" style="display: none;">
+            <h3>📊 图片颜色分析</h3>
+            <div id="dominantColors"></div>
+            <div id="colorStatistics"></div>
+        </div>
+
+        <div class="footer">
+            <p>💡 提示：点击图片任意位置查看该点的HSV颜色值</p>
+            <p>本工具完全在浏览器中运行，不会上传您的图片</p>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const imageInput = document.getElementById('imageInput');
+        const canvas = document.getElementById('imageCanvas');
+        const ctx = canvas.getContext('2d');
+        const colorInfo = document.getElementById('colorInfo');
+        const analysisResult = document.getElementById('analysisResult');
+
+        // 文件上传处理
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleImageUpload(files[0]);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageUpload(e.target.files[0]);
+            }
+        });
+
+        function handleImageUpload(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('请选择图片文件！');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    displayImage(img);
+                    analyzeImage(img);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function displayImage(img) {
+            const maxWidth = 700;
+            const maxHeight = 500;
+            let { width, height } = img;
+
+            if (width > maxWidth || height > maxHeight) {
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width *= ratio;
+                height *= ratio;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            canvas.style.display = 'block';
+            colorInfo.style.display = 'block';
+        }
+
+        // 点击获取像素颜色
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) * (canvas.width / rect.width));
+            const y = Math.floor((e.clientY - rect.top) * (canvas.height / rect.height));
+            
+            const imageData = ctx.getImageData(x, y, 1, 1);
+            const [r, g, b] = imageData.data;
+            
+            const hsv = rgbToHsv(r, g, b);
+            const hex = rgbToHex(r, g, b);
+            
+            updateColorInfo(r, g, b, hsv, hex);
+        });
+
+        function rgbToHsv(r, g, b) {
+            r /= 255;
+            g /= 255;
+            b /= 255;
+
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const diff = max - min;
+
+            let h = 0;
+            if (diff !== 0) {
+                if (max === r) {
+                    h = ((g - b) / diff) % 6;
+                } else if (max === g) {
+                    h = (b - r) / diff + 2;
+                } else {
+                    h = (r - g) / diff + 4;
+                }
+            }
+            h = Math.round(h * 60);
+            if (h < 0) h += 360;
+
+            const s = Math.round(max === 0 ? 0 : (diff / max) * 100);
+            const v = Math.round(max * 100);
+
+            return { h, s, v };
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + [r, g, b].map(x => {
+                const hex = x.toString(16);
+                return hex.length === 1 ? "0" + hex : hex;
+            }).join("");
+        }
+
+        function updateColorInfo(r, g, b, hsv, hex) {
+            const colorSample = document.getElementById('colorSample');
+            const hsvValues = document.getElementById('hsvValues');
+            const rgbValues = document.getElementById('rgbValues');
+            const hexValues = document.getElementById('hexValues');
+
+            colorSample.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+            hsvValues.textContent = `H:${hsv.h}° S:${hsv.s}% V:${hsv.v}%`;
+            rgbValues.textContent = `R:${r} G:${g} B:${b}`;
+            hexValues.textContent = hex;
+        }
+
+        function analyzeImage(img) {
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = img.width;
+            tempCanvas.height = img.height;
+            tempCtx.drawImage(img, 0, 0);
+
+            const imageData = tempCtx.getImageData(0, 0, img.width, img.height);
+            const pixels = imageData.data;
+
+            const colorMap = new Map();
+            const hueStats = new Array(12).fill(0);
+            const saturationStats = { low: 0, mid: 0, high: 0 };
+            const brightnessStats = { dark: 0, mid: 0, bright: 0 };
+
+            for (let i = 0; i < pixels.length; i += 4) {
+                const r = pixels[i];
+                const g = pixels[i + 1];
+                const b = pixels[i + 2];
+                const hsv = rgbToHsv(r, g, b);
+
+                // 统计色相分布
+                const hueIndex = Math.floor(hsv.h / 30);
+                hueStats[hueIndex]++;
+
+                // 统计饱和度分布
+                if (hsv.s < 30) saturationStats.low++;
+                else if (hsv.s < 70) saturationStats.mid++;
+                else saturationStats.high++;
+
+                // 统计亮度分布
+                if (hsv.v < 33) brightnessStats.dark++;
+                else if (hsv.v < 67) brightnessStats.mid++;
+                else brightnessStats.bright++;
+
+                // 简化颜色以便统计主要颜色
+                const simplifiedHsv = `${Math.floor(hsv.h / 15) * 15}-${Math.floor(hsv.s / 25) * 25}-${Math.floor(hsv.v / 25) * 25}`;
+                colorMap.set(simplifiedHsv, (colorMap.get(simplifiedHsv) || 0) + 1);
+            }
+
+            displayAnalysis(colorMap, hueStats, saturationStats, brightnessStats, pixels.length / 4);
+        }
+
+        function displayAnalysis(colorMap, hueStats, saturationStats, brightnessStats, totalPixels) {
+            const dominantColors = document.getElementById('dominantColors');
+            const colorStatistics = document.getElementById('colorStatistics');
+
+            // 显示主要颜色
+            const sortedColors = Array.from(colorMap.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            dominantColors.innerHTML = '<h4>🎨 主要颜色</h4><div class="dominant-colors">';
+            sortedColors.forEach(([hsvStr, count]) => {
+                const [h, s, v] = hsvStr.split('-').map(Number);
+                const percentage = ((count / totalPixels) * 100).toFixed(1);
+                const rgb = hsvToRgb(h, s, v);
+                
+                dominantColors.innerHTML += `
+                    <div class="color-item">
+                        <div class="color-box" style="background-color: rgb(${rgb.r}, ${rgb.g}, ${rgb.b})"></div>
+                        <div style="font-size: 12px;">H:${h}° S:${s}% V:${v}%</div>
+                        <div style="font-weight: bold;">${percentage}%</div>
+                    </div>
+                `;
+            });
+            dominantColors.innerHTML += '</div>';
+
+            // 显示详细统计
+            const hueNames = ['红', '橙', '黄', '黄绿', '绿', '青绿', '青', '蓝', '蓝紫', '紫', '紫红', '红紫'];
+            
+            colorStatistics.innerHTML = `
+                <h4>📈 颜色分布统计</h4>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <h5>🌈 色相分布</h5>
+                        ${hueStats.map((count, index) => {
+                            const percentage = ((count / totalPixels) * 100).toFixed(1);
+                            return percentage > 2 ? `
+                                <div>
+                                    ${hueNames[index]}: ${percentage}%
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                                    </div>
+                                </div>
+                            ` : '';
+                        }).join('')}
+                    </div>
+                    <div class="stat-item">
+                        <h5>💧 饱和度分布</h5>
+                        <div>低饱和度: ${((saturationStats.low / totalPixels) * 100).toFixed(1)}%</div>
+                        <div>中饱和度: ${((saturationStats.mid / totalPixels) * 100).toFixed(1)}%</div>
+                        <div>高饱和度: ${((saturationStats.high / totalPixels) * 100).toFixed(1)}%</div>
+                    </div>
+                    <div class="stat-item">
+                        <h5>☀️ 亮度分布</h5>
+                        <div>暗色: ${((brightnessStats.dark / totalPixels) * 100).toFixed(1)}%</div>
+                        <div>中等: ${((brightnessStats.mid / totalPixels) * 100).toFixed(1)}%</div>
+                        <div>亮色: ${((brightnessStats.bright / totalPixels) * 100).toFixed(1)}%</div>
+                    </div>
+                </div>
+            `;
+
+            analysisResult.style.display = 'block';
+        }
+
+        function hsvToRgb(h, s, v) {
+            s /= 100;
+            v /= 100;
+
+            const c = v * s;
+            const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+            const m = v - c;
+
+            let r = 0, g = 0, b = 0;
+            if (h < 60) {
+                r = c; g = x; b = 0;
+            } else if (h < 120) {
+                r = x; g = c; b = 0;
+            } else if (h < 180) {
+                r = 0; g = c; b = x;
+            } else if (h < 240) {
+                r = 0; g = x; b = c;
+            } else if (h < 300) {
+                r = x; g = 0; b = c;
+            } else {
+                r = c; g = 0; b = x;
+            }
+
+            return {
+                r: Math.round((r + m) * 255),
+                g: Math.round((g + m) * 255),
+                b: Math.round((b + m) * 255)
+            };
+        }
+    </script>
+</body>
+</html>
