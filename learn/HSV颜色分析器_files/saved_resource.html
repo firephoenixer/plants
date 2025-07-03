@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<!-- saved from url=(0012)about:srcdoc -->
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js" integrity="sha512-iZ2ORl595Wx6miw+GuadDet4WQbdSWS3JLMoNfY8cRGoEFy6oT3G9IbcrBeL6AfkgpA51ETt/faX6yLV+/gFJg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+      (function() {
+        const originalConsole = window.console;
+        window.console = {
+          log: (...args) => {
+            originalConsole.log(...args);
+            window.parent.postMessage({ type: 'console', message: args.join(' ') }, '*');
+          },
+          error: (...args) => {
+            originalConsole.error(...args);
+            window.parent.postMessage({ type: 'console', message: 'Error: ' + args.join(' ') }, '*');
+          },
+          warn: (...args) => {
+            originalConsole.warn(...args);
+            window.parent.postMessage({ type: 'console', message: 'Warning: ' + args.join(' ') }, '*');
+          }
+        };
+
+        let requestId = 0;
+        let callbacksMap = new Map();
+        window.claude = {
+          complete: (prompt) => {
+            return new Promise((resolve, reject) => {
+              const id = requestId++;
+              callbacksMap.set(id, { resolve, reject });
+              window.parent.postMessage({ type: 'claudeComplete', id, prompt }, '*');
+            });
+          }
+        };
+
+        // Override global fetch
+        window.fetch = (url, init = {}) => {
+          return new Promise((resolve, reject) => {
+            const id = requestId++;
+            callbacksMap.set(id, { resolve, reject });
+            window.parent.postMessage({
+              type: 'proxyFetch',
+              id,
+              url,
+              init,
+            }, '*');
+          });
+        };
+
+        window.addEventListener('message', async (event) => {
+          if (event.data.type === 'takeScreenshot') {
+            const rootElement = document.getElementById('artifacts-component-root-html');
+            if (!rootElement) {
+              window.parent.postMessage({
+                type: 'screenshotError',
+                error: new Error('Root element not found'),
+              }, '*');
+            }
+            const screenshot = await htmlToImage.toPng(rootElement, {
+              imagePlaceholder:
+                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjePDgwX8ACOQDoNsk0PMAAAAASUVORK5CYII=",
+            });
+            window.parent.postMessage({
+              type: 'screenshotData',
+              data: screenshot,
+            }, '*');
+          } else if (event.data.type === 'claudeComplete') {
+            const callback = callbacksMap.get(event.data.id);
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.completion);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'proxyFetchResponse') {
+            const callback = callbacksMap.get(event.data.id);
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(new Response(event.data.body, {
+                status: event.data.status,
+                statusText: event.data.statusText,
+                headers: event.data.headers
+              }));
+            }
+            callbacksMap.delete(event.data.id);
+          }
+        });
+
+        window.addEventListener('click', (event) => {
+          const isEl = event.target instanceof HTMLElement;
+          if (!isEl) return;
+    
+          // find ancestor links
+          const linkEl = event.target.closest("a");
+          if (!linkEl || !linkEl.href) return;
+    
+          event.preventDefault();
+          event.stopImmediatePropagation();
+    
+          let linkUrl;
+          try {
+            linkUrl = new URL(linkEl.href);
+          } catch (error) {
+            return;
+          }
+    
+          if (linkUrl.hostname === window.location.hostname) return;
+    
+          window.parent.postMessage({
+            type: 'openExternal',
+            href: linkEl.href,
+          }, '*');
+      });
+
+        const originalOpen = window.open;
+        window.open = function (url) {
+          window.parent.postMessage({
+            type: "openExternal",
+            href: url,
+          }, "*");
+        };
+
+        window.addEventListener('error', (event) => {
+          window.parent.postMessage({ type: 'console', message: 'Uncaught Error: ' + event.message }, '*');
+        });
+      })();
+    </script>
+  
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSV颜色拾取器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .upload-area.dragover {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .upload-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        #imageCanvas {
+            max-width: 100%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            margin: 20px 0;
+            cursor: crosshair;
+        }
+        .color-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .color-sample {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 15px;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            vertical-align: middle;
+        }
+        .color-values {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .color-values div {
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        .analysis-result {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .dominant-colors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .color-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 120px;
+        }
+        .color-item .color-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            margin: 0 auto 8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body id="artifacts-component-root-html">
+    <div class="container">
+        <h1>🎨 HSV颜色分析器</h1>
+        
+        <div class="upload-area" id="uploadArea">
+            <p>📸 拖拽图片到此处或点击上传</p>
+            <button class="upload-btn" onclick="document.getElementById(&#39;imageInput&#39;).click()">
+                选择图片
+            </button>
+            <input type="file" id="imageInput" accept="image/*">
+        </div>
+        
+        <canvas id="imageCanvas" style="display: block;" width="104" height="19"></canvas>
+        
+        <div class="color-info" id="colorInfo" style="display: block;">
+            <h3>🎯 点击像素颜色信息</h3>
+            <div class="color-sample" id="colorSample" style="background-color: rgb(145, 145, 145);"></div>
+            <div class="color-values" id="colorValues">
+                <div>HSV: <span id="hsvValues">H:0° S:0% V:57%</span></div>
+                <div>RGB: <span id="rgbValues">R:145 G:145 B:145</span></div>
+                <div>HEX: <span id="hexValues">#919191</span></div>
+            </div>
+        </div>
+        
+        <div class="analysis-result" id="analysisResult" style="display: block;">
+            <h3>📊 图片颜色分析</h3>
+            <div id="dominantColors"><h4>🎨 主要颜色</h4><div class="dominant-colors"></div>
+                    <div class="color-item">
+                        <div class="color-box" style="background-color: rgb(204, 204, 204)"></div>
+                        <div>H:0° S:0% V:80%</div>
+                        <div>86.8%</div>
+                    </div>
+                
+                    <div class="color-item">
+                        <div class="color-box" style="background-color: rgb(153, 153, 153)"></div>
+                        <div>H:0° S:0% V:60%</div>
+                        <div>8.4%</div>
+                    </div>
+                
+                    <div class="color-item">
+                        <div class="color-box" style="background-color: rgb(102, 102, 102)"></div>
+                        <div>H:0° S:0% V:40%</div>
+                        <div>4.8%</div>
+                    </div>
+                </div>
+            <div id="colorStatistics"><h4>🌈 色相分布</h4><div>红: 100.0%</div></div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const imageInput = document.getElementById('imageInput');
+        const canvas = document.getElementById('imageCanvas');
+        const ctx = canvas.getContext('2d');
+        const colorInfo = document.getElementById('colorInfo');
+        const analysisResult = document.getElementById('analysisResult');
+
+        // 文件上传处理
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleImageUpload(files[0]);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageUpload(e.target.files[0]);
+            }
+        });
+
+        function handleImageUpload(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    displayImage(img);
+                    analyzeImage(img);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function displayImage(img) {
+            const maxWidth = 600;
+            const maxHeight = 400;
+            let { width, height } = img;
+
+            if (width > maxWidth || height > maxHeight) {
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width *= ratio;
+                height *= ratio;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            canvas.style.display = 'block';
+            colorInfo.style.display = 'block';
+        }
+
+        // 点击获取像素颜色
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) * (canvas.width / rect.width));
+            const y = Math.floor((e.clientY - rect.top) * (canvas.height / rect.height));
+            
+            const imageData = ctx.getImageData(x, y, 1, 1);
+            const [r, g, b] = imageData.data;
+            
+            const hsv = rgbToHsv(r, g, b);
+            const hex = rgbToHex(r, g, b);
+            
+            updateColorInfo(r, g, b, hsv, hex);
+        });
+
+        function rgbToHsv(r, g, b) {
+            r /= 255;
+            g /= 255;
+            b /= 255;
+
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const diff = max - min;
+
+            let h = 0;
+            if (diff !== 0) {
+                if (max === r) {
+                    h = ((g - b) / diff) % 6;
+                } else if (max === g) {
+                    h = (b - r) / diff + 2;
+                } else {
+                    h = (r - g) / diff + 4;
+                }
+            }
+            h = Math.round(h * 60);
+            if (h < 0) h += 360;
+
+            const s = Math.round(max === 0 ? 0 : (diff / max) * 100);
+            const v = Math.round(max * 100);
+
+            return { h, s, v };
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + [r, g, b].map(x => {
+                const hex = x.toString(16);
+                return hex.length === 1 ? "0" + hex : hex;
+            }).join("");
+        }
+
+        function updateColorInfo(r, g, b, hsv, hex) {
+            const colorSample = document.getElementById('colorSample');
+            const hsvValues = document.getElementById('hsvValues');
+            const rgbValues = document.getElementById('rgbValues');
+            const hexValues = document.getElementById('hexValues');
+
+            colorSample.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+            hsvValues.textContent = `H:${hsv.h}° S:${hsv.s}% V:${hsv.v}%`;
+            rgbValues.textContent = `R:${r} G:${g} B:${b}`;
+            hexValues.textContent = hex;
+        }
+
+        function analyzeImage(img) {
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = img.width;
+            tempCanvas.height = img.height;
+            tempCtx.drawImage(img, 0, 0);
+
+            const imageData = tempCtx.getImageData(0, 0, img.width, img.height);
+            const pixels = imageData.data;
+
+            const colorMap = new Map();
+            const hueStats = new Array(12).fill(0); // 12个色相区间
+
+            for (let i = 0; i < pixels.length; i += 4) {
+                const r = pixels[i];
+                const g = pixels[i + 1];
+                const b = pixels[i + 2];
+                const hsv = rgbToHsv(r, g, b);
+
+                // 统计色相分布
+                const hueIndex = Math.floor(hsv.h / 30);
+                hueStats[hueIndex]++;
+
+                // 简化颜色以便统计
+                const simplifiedHsv = `${Math.floor(hsv.h / 10) * 10}-${Math.floor(hsv.s / 20) * 20}-${Math.floor(hsv.v / 20) * 20}`;
+                colorMap.set(simplifiedHsv, (colorMap.get(simplifiedHsv) || 0) + 1);
+            }
+
+            displayAnalysis(colorMap, hueStats, pixels.length / 4);
+        }
+
+        function displayAnalysis(colorMap, hueStats, totalPixels) {
+            const dominantColors = document.getElementById('dominantColors');
+            const colorStatistics = document.getElementById('colorStatistics');
+
+            // 显示主要颜色
+            const sortedColors = Array.from(colorMap.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 6);
+
+            dominantColors.innerHTML = '<h4>🎨 主要颜色</h4><div class="dominant-colors">';
+            sortedColors.forEach(([hsvStr, count]) => {
+                const [h, s, v] = hsvStr.split('-').map(Number);
+                const percentage = ((count / totalPixels) * 100).toFixed(1);
+                const rgb = hsvToRgb(h, s, v);
+                
+                dominantColors.innerHTML += `
+                    <div class="color-item">
+                        <div class="color-box" style="background-color: rgb(${rgb.r}, ${rgb.g}, ${rgb.b})"></div>
+                        <div>H:${h}° S:${s}% V:${v}%</div>
+                        <div>${percentage}%</div>
+                    </div>
+                `;
+            });
+            dominantColors.innerHTML += '</div>';
+
+            // 显示色相分布
+            const hueNames = ['红', '橙', '黄', '黄绿', '绿', '青绿', '青', '蓝', '蓝紫', '紫', '紫红', '红紫'];
+            colorStatistics.innerHTML = '<h4>🌈 色相分布</h4>';
+            hueStats.forEach((count, index) => {
+                if (count > 0) {
+                    const percentage = ((count / totalPixels) * 100).toFixed(1);
+                    colorStatistics.innerHTML += `<div>${hueNames[index]}: ${percentage}%</div>`;
+                }
+            });
+
+            analysisResult.style.display = 'block';
+        }
+
+        function hsvToRgb(h, s, v) {
+            s /= 100;
+            v /= 100;
+
+            const c = v * s;
+            const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+            const m = v - c;
+
+            let r = 0, g = 0, b = 0;
+            if (h < 60) {
+                r = c; g = x; b = 0;
+            } else if (h < 120) {
+                r = x; g = c; b = 0;
+            } else if (h < 180) {
+                r = 0; g = c; b = x;
+            } else if (h < 240) {
+                r = 0; g = x; b = c;
+            } else if (h < 300) {
+                r = x; g = 0; b = c;
+            } else {
+                r = c; g = 0; b = x;
+            }
+
+            return {
+                r: Math.round((r + m) * 255),
+                g: Math.round((g + m) * 255),
+                b: Math.round((b + m) * 255)
+            };
+        }
+    </script>
+
+</body></html>

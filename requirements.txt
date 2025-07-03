@@ -1,3 +1,5 @@
 mss
 opencv-python
-numpy 
+numpy
+pyautogui
+pytesseract
