@@ -55,16 +55,20 @@ def main():
             # 第3次循环时绘制植物菜单区域（红色）
             pvz_game.draw_plant_menu_region()
         elif times == 5:
-            # 第5次循环时绘制战线区域（蓝色）
+            # 第5次循环时绘制战线区域（蓝色）+ 种植位置（绿色）
             pvz_game.draw_line_region()
         elif times == 7:
-            # 第7次循环时同时绘制所有区域
+            # 第7次循环时仅绘制种植位置（绿色）
+            pvz_game.draw_plant_positions_only()
+        elif times == 9:
+            # 第9次循环时同时绘制所有区域
             pvz_game.draw_all_regions()
         elif times == 1:
             print("绘制测试将在不同循环次数触发:")
             print("- 第3次循环: 绘制植物菜单区域（红色）")
-            print("- 第5次循环: 绘制战线区域（蓝色）")
-            print("- 第7次循环: 同时绘制所有区域")
+            print("- 第5次循环: 绘制战线区域（蓝色）+ 种植位置（绿色）")
+            print("- 第7次循环: 仅绘制种植位置（绿色）")
+            print("- 第9次循环: 同时绘制所有区域")
 
 
 

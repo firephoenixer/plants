@@ -28,10 +28,18 @@ def test_regions():
         print("\n2. 测试植物菜单区域绘制（红色）...")
         pvz_game.draw_plant_menu_region()
         
-        print("\n3. 测试战线区域绘制（蓝色）...")
+        print("\n3. 测试战线区域绘制（蓝色）+ 种植位置（绿色）...")
         pvz_game.draw_line_region()
         
-        print("\n4. 测试同时绘制所有区域...")
+        print("\n4. 测试仅绘制种植位置（绿色）...")
+        # 重置绘制状态
+        pvz_game.reset_plant_menu_drawn()
+        pvz_game.reset_line_drawn()
+        
+        # 仅绘制种植位置
+        pvz_game.draw_plant_positions_only()
+        
+        print("\n5. 测试同时绘制所有区域...")
         # 重置绘制状态
         pvz_game.reset_plant_menu_drawn()
         pvz_game.reset_line_drawn()
@@ -42,8 +50,9 @@ def test_regions():
         print("\n✅ 所有测试完成！")
         print("\n生成的图像文件：")
         print("- game_with_plant_menu_regions.png: 植物菜单区域（红色）")
-        print("- game_with_line_regions.png: 战线区域（蓝色）")
-        print("- game_with_all_regions.png: 所有区域（红色+蓝色）")
+        print("- game_with_line_regions.png: 战线区域（蓝色）+ 种植位置（绿色）")
+        print("- game_with_plant_positions.png: 仅种植位置（绿色）")
+        print("- game_with_all_regions.png: 所有区域（红色+蓝色+绿色）")
         
         # 显示最终图像
         if pvz_game.game_screenshot is not None:

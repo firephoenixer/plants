@@ -65,12 +65,22 @@ class PlantsVsZombies:
         # 定义5条战线区域
         self.line_region = []
         for i in range(1, 6):
+            line_y = 79 + (i - 1) * 100  # 计算当前战线的y坐标
             self.line_region.append({
                 "x": 29,
-                "y": 79 + (i - 1) * 100,
+                "y": line_y,
                 "width": 732,
-                "height": 123
+                "height": 123,
+                "plant_position": []  # 战线区域中的9个植物种植位置
             })
+            # 为每条战线定义9个植物种植位置
+            for j in range(1, 10):
+                self.line_region[i - 1]['plant_position'].append({
+                    "x": 29 + (j - 1) * 82,
+                    "y": line_y,  # 使用当前战线的y坐标
+                    "width": 82,
+                    "height": 123
+                })
 
 
     # 查找游戏特征图片，找到则保存其坐标，找不到则提示用户核查原因，并返回False
@@ -491,6 +501,28 @@ class PlantsVsZombies:
     def reset_line_drawn(self):
         self.line_drawn = False
         print("战线区域绘制状态已重置")
+    
+    # 仅绘制种植位置（绿色框）
+    def draw_plant_positions_only(self):
+        """仅绘制所有战线的种植位置，不绘制战线边框"""
+        if self.game_screenshot is None:
+            print("游戏截图不存在，无法绘制种植位置")
+            return
+        
+        total_positions = 0
+        for i, region in enumerate(self.line_region):
+            plant_count = 0
+            for j, plant_pos in enumerate(region['plant_position']):
+                cv2.rectangle(self.game_screenshot,
+                             (plant_pos['x'], plant_pos['y']), 
+                             (plant_pos['x'] + plant_pos['width'], plant_pos['y'] + plant_pos['height']), 
+                             (0, 255, 0), 1)  # 绿色矩形框
+                plant_count += 1
+                total_positions += 1
+            print(f"战线 {i+1} 绘制了 {plant_count} 个种植位置")
+        
+        print(f"总共绘制了 {total_positions} 个种植位置（绿色框）")
+        cv2.imwrite("game_with_plant_positions.png", self.game_screenshot)
 
     # 使用OpenCV将5条战线区域用矩形框出来
     def draw_line_region(self):
@@ -506,11 +538,22 @@ class PlantsVsZombies:
         
         # 绘制所有战线区域的矩形框
         for i, region in enumerate(self.line_region):
+            # 绘制战线区域的蓝色边框
             cv2.rectangle(self.game_screenshot, 
                          (region['x'], region['y']), 
                          (region['x'] + region['width'], region['y'] + region['height']), 
                          (255, 0, 0), 2)  # 蓝色矩形框
             print(f"绘制战线区域 {i+1}: x={region['x']}, y={region['y']}, w={region['width']}, h={region['height']}")
+            
+            # 绘制该战线内的9个植物种植位置（绿色框）
+            plant_count = 0
+            for j, plant_pos in enumerate(region['plant_position']):
+                cv2.rectangle(self.game_screenshot,
+                             (plant_pos['x'], plant_pos['y']), 
+                             (plant_pos['x'] + plant_pos['width'], plant_pos['y'] + plant_pos['height']), 
+                             (0, 255, 0), 1)  # 绿色矩形框，线条稍细
+                plant_count += 1
+            print(f"  - 战线 {i+1} 绘制了 {plant_count} 个种植位置（绿色框）")
         
         # 标记为已绘制
         self.line_drawn = True
