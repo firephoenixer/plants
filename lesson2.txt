@@ -4,3 +4,4 @@
 4. 修改main.py，创建基本游戏逻辑架构
 5. 完成find_game_feature等函数
 6. 安装pyautogui库，并使用其控制鼠标
+7. “继续游戏”按钮的查找与点击

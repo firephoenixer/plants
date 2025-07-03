@@ -26,13 +26,26 @@ def main():
         print("浅灰色像素点数量: {}".format(light_gray_count))
         if light_gray_count > 0:
             print("游戏未激活，移动鼠标点击标题区域，激活游戏...")
+            pvz_game.is_active = False
             # 移动鼠标点击标题区域，激活游戏
             pyautogui.moveTo(pvz_game.start_x + 60, pvz_game.start_y + 10)
             pyautogui.click()
+            continue
         else:
+            pvz_game.is_active = True
             print("游戏窗口处于激活状态...")
 
-    
+        # 检查“继续游戏”按钮是否存在，存在则按空格键继续游戏，不存在则返回False
+        if_paused = pvz_game.check_and_continue_button(if_continue=False)
+        if if_paused: continue  # 如果游戏暂停，则继续循环, 不执行下面的代码
+
+
+
+
+
+
+
+        
 
 if __name__ == "__main__":
     main()

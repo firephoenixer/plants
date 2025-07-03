@@ -4,6 +4,7 @@ import my_opencv
 import res
 import numpy as np
 import cv2
+import pyautogui
 
 class PlantsVsZombies:
     def __init__(self):
@@ -28,6 +29,14 @@ class PlantsVsZombies:
             "y": 1,
             "width": 104,
             "height": 19
+        }
+
+        # 定义“继续游戏”按钮的特征区域
+        self.continue_button_region = {
+            "x": 216,
+            "y": 432,
+            "width": 354,
+            "height": 82
         }
 
 
@@ -222,6 +231,80 @@ class PlantsVsZombies:
         except Exception as e:
             print(f"❌ 统计像素点数量时发生错误: {e}")
             return -1
+
+    # 检查“继续游戏”按钮是否存在，存在则按空格键继续游戏，不存在则返回False
+    def check_and_continue_button(self, if_continue=True):
+        """
+        检查游戏中的"继续"按钮是否存在，如果存在则按空格键
+        
+        Returns:
+            bool: 找到按钮并成功按键返回True，否则返回False
+        """
+        try:
+            if self.game_screenshot is None:
+                print("❌ 游戏截图为空，无法检查继续按钮")
+                return False
+            
+            if not hasattr(self, 'continue_button_region'):
+                print("❌ 继续按钮区域未定义")
+                return False
+            
+            print("🔍 正在检查继续按钮...")
+            
+            # 从游戏截图中裁剪继续按钮区域
+            region = self.continue_button_region
+            button_region = self.opencv.crop_image(
+                self.game_screenshot,
+                region['x'],
+                region['y'],
+                region['width'],
+                region['height']
+            )
+            
+            if button_region is None:
+                print("❌ 裁剪继续按钮区域失败")
+                return False
+            
+            # 创建模板匹配器
+            matcher = my_opencv.TemplateMatcher(threshold=0.8)
+            
+            # 在裁剪的区域中查找继续按钮
+            matches = matcher.match_template(button_region, self.resource.continue_button_path)
+            
+            if matches and len(matches) > 0:
+                # 找到了继续按钮
+                button_x = matches[0]['x']
+                button_y = matches[0]['y']
+                confidence = matches[0]['confidence']
+                
+                print(f"✅ 找到继续按钮！")
+                print(f"📍 按钮在区域内坐标: ({button_x}, {button_y})")
+                print(f"🎯 匹配置信度: {confidence:.3f}")
+                
+                if if_continue:
+                    # 按空格键继续游戏
+                    pyautogui.press('space')
+                    print("⌨️ 已按下空格键继续游戏")
+                
+                return True  # 表示刚才游戏处于暂停状态
+            else:
+                print("❌ 未找到继续按钮")
+                return False  # 表示刚才游戏未发现暂停特征
+                
+        except Exception as e:
+            print(f"❌ 检查继续按钮时发生错误: {e}")
+            return False
+
+
+
+
+
+
+
+
+
+
+
 
     def start(self):
         print("游戏开始")
