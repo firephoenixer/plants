@@ -5,6 +5,7 @@ import res
 import numpy as np
 import cv2
 import pyautogui
+import time
 
 class PlantsVsZombies:
     def __init__(self):
@@ -295,7 +296,52 @@ class PlantsVsZombies:
             print(f"❌ 检查继续按钮时发生错误: {e}")
             return False
 
-
+    # 全屏匹配self.resource.sun_path，如果找到，则分别全部点击，以完成收集阳光
+    def collect_sun(self):
+        """
+        在游戏截图中查找所有阳光并点击收集
+        """
+        try:
+            if self.game_screenshot is None:
+                print("❌ 游戏截图为空，无法收集阳光")
+                return
+            
+            print("🌞 正在查找阳光...")
+            
+            # 创建模板匹配器，降低阈值以提高检测率
+            matcher = my_opencv.TemplateMatcher(threshold=0.9)
+            
+            # 在游戏截图中查找所有阳光
+            matches = matcher.match_template(self.game_screenshot, self.resource.sun_path)
+            
+            if matches and len(matches) > 0:
+                print(f"✅ 找到 {len(matches)} 个阳光！")
+                
+                # 遍历所有阳光并点击收集
+                for i, match in enumerate(matches):
+                    # 计算阳光中心点坐标（在游戏截图中的相对坐标）
+                    sun_x = match['x'] + match['width'] // 2
+                    sun_y = match['y'] + match['height'] // 2
+                    
+                    # 转换为屏幕绝对坐标
+                    screen_x = self.start_x + sun_x
+                    screen_y = self.start_y + sun_y
+                    
+                    print(f"🌞 收集第 {i+1} 个阳光: 游戏坐标({sun_x}, {sun_y}) → 屏幕坐标({screen_x}, {screen_y})")
+                    
+                    # 点击阳光
+                    pyautogui.click(screen_x, screen_y)
+                    
+                    # 短暂延迟避免点击过快
+                    time.sleep(0.1)
+                
+                print(f"💰 成功收集了 {len(matches)} 个阳光！")
+                
+            else:
+                print("❌ 未找到阳光")
+                
+        except Exception as e:
+            print(f"❌ 收集阳光时发生错误: {e}")
 
 
 

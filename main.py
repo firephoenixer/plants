@@ -39,13 +39,14 @@ def main():
         if_paused = pvz_game.check_and_continue_button(if_continue=False)
         if if_paused: continue  # 如果游戏暂停，则继续循环, 不执行下面的代码
 
+        # 收集阳光
+        pvz_game.collect_sun()
 
 
 
 
 
 
-        
 
 if __name__ == "__main__":
     main()
