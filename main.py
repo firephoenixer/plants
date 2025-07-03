@@ -42,6 +42,14 @@ def main():
         # 收集阳光
         pvz_game.collect_sun()
 
+        # 读取阳光值
+        sun_value = pvz_game.read_sun_value()
+        if sun_value > 0:
+            pvz_game.sun_value = sun_value
+            print("当前阳光值: {}".format(sun_value))
+        else:
+            print("阳光值读取失败，使用上次的值: {}".format(pvz_game.sun_value))
+
 
 
 

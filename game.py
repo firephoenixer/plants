@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 import pyautogui
 import time
+import pytesseract
 
 class PlantsVsZombies:
     def __init__(self):
@@ -23,6 +24,7 @@ class PlantsVsZombies:
         self.is_paused = False
         self.is_game_won = False
         self.is_game_lost = False
+        self.sun_value = 0
 
         # 定义窗口激活状态的特征区域
         self.active_region = {
@@ -38,6 +40,14 @@ class PlantsVsZombies:
             "y": 432,
             "width": 354,
             "height": 82
+        }
+
+        # 定义阳光值的读取区域
+        self.sun_value_region = {
+            "x": 20,
+            "y": 85,
+            "width": 52,
+            "height": 20
         }
 
 
@@ -344,7 +354,79 @@ class PlantsVsZombies:
             print(f"❌ 收集阳光时发生错误: {e}")
 
 
-
+    # 读取阳光值，使用pytesseract库，注意需要安装其OCR引擎
+    def read_sun_value(self):
+        """
+        从游戏截图中读取阳光数值
+        
+        Returns:
+            int: 读取到的阳光数值，失败时返回-1
+        """
+        try:
+            if self.game_screenshot is None:
+                print("❌ 游戏截图为空，无法读取阳光值")
+                return -1
+            
+            print("🔍 正在读取阳光值...")
+            
+            # 从游戏截图中裁剪阳光值区域
+            region = self.sun_value_region
+            sun_region = self.opencv.crop_image(
+                self.game_screenshot,
+                region['x'],
+                region['y'],
+                region['width'],
+                region['height']
+            )
+            
+            if sun_region is None:
+                print("❌ 裁剪阳光值区域失败")
+                return -1
+            
+            # 保存原始区域图像用于调试
+            cv2.imwrite("sun_region_original.png", sun_region)
+            
+            # 放大原图
+            scale_factor = 5
+            height, width = sun_region.shape[:2]
+            enlarged = cv2.resize(sun_region, (width * scale_factor, height * scale_factor), interpolation=cv2.INTER_CUBIC)
+            
+            # 保存放大后的图像用于调试
+            cv2.imwrite("sun_region_enlarged.png", enlarged)
+            
+            # 转换为灰度图
+            gray = cv2.cvtColor(enlarged, cv2.COLOR_BGR2GRAY)
+            
+            # 提高对比度：二值化处理
+            _, binary = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)
+            cv2.imwrite("sun_region_binary.png", binary)
+            
+            # 膨胀增强笔画（用于细字/断裂字）
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2,2))
+            dilated = cv2.dilate(binary, kernel)
+            cv2.imwrite("sun_region_dilated.png", dilated)
+            
+            # 使用pytesseract进行OCR识别
+            # 只识别数字的配置
+            config = r'--oem 3 --psm 7 outputbase digits'
+            
+            # 识别处理后的图像
+            text = pytesseract.image_to_string(dilated, config=config).strip()
+            
+            print(f"🔍 OCR识别结果: '{text}'")
+            
+            # 解析识别结果
+            if text.isdigit():
+                sun_value = int(text)
+                print(f"☀️ 当前阳光值: {sun_value}")
+                return sun_value
+            else:
+                print(f"❌ OCR识别结果不是有效数字: '{text}'")
+                return -1
+                
+        except Exception as e:
+            print(f"❌ 读取阳光值时发生错误: {e}")
+            return -1
 
 
 
