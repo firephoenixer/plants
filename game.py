@@ -25,8 +25,11 @@ class PlantsVsZombies:
         self.is_game_won = False
         self.is_game_lost = False
         self.sun_value = 0
+<<<<<<< HEAD
         self.plant_menu_drawn = False  # 记录植物菜单区域是否已经绘制
         self.line_drawn = False  # 记录战线区域是否已经绘制
+=======
+>>>>>>> 6d13befba52ca16f6246512167b8ff9bdabe9f44
 
         # 定义窗口激活状态的特征区域
         self.active_region = {
@@ -51,6 +54,7 @@ class PlantsVsZombies:
             "width": 52,
             "height": 20
         }
+<<<<<<< HEAD
 
         # 定义10个植物的菜单栏区域
         self.plant_menu_region = []
@@ -81,6 +85,8 @@ class PlantsVsZombies:
                     "width": 82,
                     "height": 123
                 })
+=======
+>>>>>>> 6d13befba52ca16f6246512167b8ff9bdabe9f44
 
 
     # 查找游戏特征图片，找到则保存其坐标，找不到则提示用户核查原因，并返回False
@@ -167,10 +173,13 @@ class PlantsVsZombies:
                 if success:
                     print(f"🎮 游戏区域截图已保存: {self.game_width}x{self.game_height}")
                     print(f"📍 起始坐标: ({self.start_x}, {self.start_y})")
+<<<<<<< HEAD
                     # 重置植物菜单区域绘制状态，因为截图已更新
                     self.reset_plant_menu_drawn()
                     # 重置战线区域绘制状态，因为截图已更新
                     self.reset_line_drawn()
+=======
+>>>>>>> 6d13befba52ca16f6246512167b8ff9bdabe9f44
                 else:
                     print("❌ 保存游戏截图失败")
                 
@@ -465,6 +474,7 @@ class PlantsVsZombies:
             return -1
 
 
+<<<<<<< HEAD
     # 使用OpenCV将10个植物的菜单栏区域用矩形框出来
     def draw_plant_menu_region(self):
         # 检查是否已经绘制过矩形框
@@ -578,6 +588,11 @@ class PlantsVsZombies:
         # 保存同时包含两种区域的图像
         cv2.imwrite("game_with_all_regions.png", self.game_screenshot)
         print("所有区域绘制完成，图像已保存到 game_with_all_regions.png")
+=======
+
+
+
+>>>>>>> 6d13befba52ca16f6246512167b8ff9bdabe9f44
 
 
     def start(self):

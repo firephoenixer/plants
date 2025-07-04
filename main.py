@@ -49,6 +49,7 @@ def main():
             print("当前阳光值: {}".format(sun_value))
         else:
             print("阳光值读取失败，使用上次的值: {}".format(pvz_game.sun_value))
+<<<<<<< HEAD
         
         # 测试绘制植物菜单区域和战线区域
         if times == 3:
@@ -69,6 +70,8 @@ def main():
             print("- 第5次循环: 绘制战线区域（蓝色）+ 种植位置（绿色）")
             print("- 第7次循环: 仅绘制种植位置（绿色）")
             print("- 第9次循环: 同时绘制所有区域")
+=======
+>>>>>>> 6d13befba52ca16f6246512167b8ff9bdabe9f44
 
 
 
