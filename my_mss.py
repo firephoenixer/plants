@@ -5,19 +5,20 @@ import numpy as np
 class ScreenCapture:
     """封装mss库的屏幕截图功能"""
     
+    # 构造函数
     def __init__(self):
         """初始化屏幕截图对象"""
-        self.sct = None
-    
-    def __enter__(self):
-        """上下文管理器入口"""
         self.sct = mss.mss()
-        return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """上下文管理器出口"""
-        if self.sct:
-            self.sct.close()
+    # def __enter__(self):
+    #     """上下文管理器入口"""
+    #     self.sct = mss.mss()
+    #     return self
+    
+    # def __exit__(self, exc_type, exc_val, exc_tb):
+    #     """上下文管理器出口"""
+    #     if self.sct:
+    #         self.sct.close()
     
     def take_full_screenshot(self, output_path="screen.png"):
         """
