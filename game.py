@@ -24,12 +24,7 @@ class PlantsVsZombies:
         self.is_paused = False
         self.is_game_won = False
         self.is_game_lost = False
-        self.sun_value = 0
-<<<<<<< HEAD
-        self.plant_menu_drawn = False  # 记录植物菜单区域是否已经绘制
-        self.line_drawn = False  # 记录战线区域是否已经绘制
-=======
->>>>>>> 6d13befba52ca16f6246512167b8ff9bdabe9f44
+        self.sun_value = 0  # 阳光值
 
         # 定义窗口激活状态的特征区域
         self.active_region = {
@@ -54,42 +49,9 @@ class PlantsVsZombies:
             "width": 52,
             "height": 20
         }
-<<<<<<< HEAD
-
-        # 定义10个植物的菜单栏区域
-        self.plant_menu_region = []
-        for i in range(1, 11):
-            self.plant_menu_region.append({
-                "x": 86 + (i - 1) * 51,
-                "y": 30,
-                "width": 49,
-                "height": 69
-            })
-
-        # 定义5条战线区域
-        self.line_region = []
-        for i in range(1, 6):
-            line_y = 79 + (i - 1) * 100  # 计算当前战线的y坐标
-            self.line_region.append({
-                "x": 29,
-                "y": line_y,
-                "width": 732,
-                "height": 123,
-                "plant_position": []  # 战线区域中的9个植物种植位置
-            })
-            # 为每条战线定义9个植物种植位置
-            for j in range(1, 10):
-                self.line_region[i - 1]['plant_position'].append({
-                    "x": 29 + (j - 1) * 82,
-                    "y": line_y,  # 使用当前战线的y坐标
-                    "width": 82,
-                    "height": 123
-                })
-=======
->>>>>>> 6d13befba52ca16f6246512167b8ff9bdabe9f44
 
 
-    # 查找游戏特征图片，找到则保存其坐标，找不到则提示用户核查原因，并返回False
+    # 查找游戏特征图片，找到则保存其坐标，找不到则提示用户核查原因，并返回False（附加游戏截图）
     def find_game_feature(self):
         try:
             print("正在查找游戏特征图片...")
@@ -173,13 +135,6 @@ class PlantsVsZombies:
                 if success:
                     print(f"🎮 游戏区域截图已保存: {self.game_width}x{self.game_height}")
                     print(f"📍 起始坐标: ({self.start_x}, {self.start_y})")
-<<<<<<< HEAD
-                    # 重置植物菜单区域绘制状态，因为截图已更新
-                    self.reset_plant_menu_drawn()
-                    # 重置战线区域绘制状态，因为截图已更新
-                    self.reset_line_drawn()
-=======
->>>>>>> 6d13befba52ca16f6246512167b8ff9bdabe9f44
                 else:
                     print("❌ 保存游戏截图失败")
                 
@@ -474,125 +429,9 @@ class PlantsVsZombies:
             return -1
 
 
-<<<<<<< HEAD
-    # 使用OpenCV将10个植物的菜单栏区域用矩形框出来
-    def draw_plant_menu_region(self):
-        # 检查是否已经绘制过矩形框
-        if self.plant_menu_drawn:
-            print("植物菜单区域已经绘制过，跳过重复绘制")
-            return
-        
-        # 检查是否存在游戏截图
-        if self.game_screenshot is None:
-            print("游戏截图不存在，无法绘制植物菜单区域")
-            return
-        
-        # 绘制所有植物菜单区域的矩形框
-        for i, region in enumerate(self.plant_menu_region):
-            cv2.rectangle(self.game_screenshot, 
-                         (region['x'], region['y']), 
-                         (region['x'] + region['width'], region['y'] + region['height']), 
-                         (0, 0, 255), 2)
-            print(f"绘制植物菜单区域 {i+1}: x={region['x']}, y={region['y']}, w={region['width']}, h={region['height']}")
-        
-        # 标记为已绘制
-        self.plant_menu_drawn = True
-        print("植物菜单区域绘制完成")
-        
-        # 保存绘制后的图像
-        cv2.imwrite("game_with_plant_menu_regions.png", self.game_screenshot)
-    
-    # 重置植物菜单区域绘制状态
-    def reset_plant_menu_drawn(self):
-        self.plant_menu_drawn = False
-        print("植物菜单区域绘制状态已重置")
-    
-    # 重置战线区域绘制状态
-    def reset_line_drawn(self):
-        self.line_drawn = False
-        print("战线区域绘制状态已重置")
-    
-    # 仅绘制种植位置（绿色框）
-    def draw_plant_positions_only(self):
-        """仅绘制所有战线的种植位置，不绘制战线边框"""
-        if self.game_screenshot is None:
-            print("游戏截图不存在，无法绘制种植位置")
-            return
-        
-        total_positions = 0
-        for i, region in enumerate(self.line_region):
-            plant_count = 0
-            for j, plant_pos in enumerate(region['plant_position']):
-                cv2.rectangle(self.game_screenshot,
-                             (plant_pos['x'], plant_pos['y']), 
-                             (plant_pos['x'] + plant_pos['width'], plant_pos['y'] + plant_pos['height']), 
-                             (0, 255, 0), 1)  # 绿色矩形框
-                plant_count += 1
-                total_positions += 1
-            print(f"战线 {i+1} 绘制了 {plant_count} 个种植位置")
-        
-        print(f"总共绘制了 {total_positions} 个种植位置（绿色框）")
-        cv2.imwrite("game_with_plant_positions.png", self.game_screenshot)
-
-    # 使用OpenCV将5条战线区域用矩形框出来
-    def draw_line_region(self):
-        # 检查是否已经绘制过矩形框
-        if self.line_drawn:
-            print("战线区域已经绘制过，跳过重复绘制")
-            return
-        
-        # 检查是否存在游戏截图
-        if self.game_screenshot is None:
-            print("游戏截图不存在，无法绘制战线区域")
-            return
-        
-        # 绘制所有战线区域的矩形框
-        for i, region in enumerate(self.line_region):
-            # 绘制战线区域的蓝色边框
-            cv2.rectangle(self.game_screenshot, 
-                         (region['x'], region['y']), 
-                         (region['x'] + region['width'], region['y'] + region['height']), 
-                         (255, 0, 0), 2)  # 蓝色矩形框
-            print(f"绘制战线区域 {i+1}: x={region['x']}, y={region['y']}, w={region['width']}, h={region['height']}")
-            
-            # 绘制该战线内的9个植物种植位置（绿色框）
-            plant_count = 0
-            for j, plant_pos in enumerate(region['plant_position']):
-                cv2.rectangle(self.game_screenshot,
-                             (plant_pos['x'], plant_pos['y']), 
-                             (plant_pos['x'] + plant_pos['width'], plant_pos['y'] + plant_pos['height']), 
-                             (0, 255, 0), 1)  # 绿色矩形框，线条稍细
-                plant_count += 1
-            print(f"  - 战线 {i+1} 绘制了 {plant_count} 个种植位置（绿色框）")
-        
-        # 标记为已绘制
-        self.line_drawn = True
-        print("战线区域绘制完成")
-        
-        # 保存绘制后的图像
-        cv2.imwrite("game_with_line_regions.png", self.game_screenshot)
-    
-    # 同时绘制植物菜单区域和战线区域
-    def draw_all_regions(self):
-        """同时绘制植物菜单区域（红色）和战线区域（蓝色）"""
-        if self.game_screenshot is None:
-            print("游戏截图不存在，无法绘制区域")
-            return
-        
-        # 绘制植物菜单区域
-        self.draw_plant_menu_region()
-        
-        # 绘制战线区域
-        self.draw_line_region()
-        
-        # 保存同时包含两种区域的图像
-        cv2.imwrite("game_with_all_regions.png", self.game_screenshot)
-        print("所有区域绘制完成，图像已保存到 game_with_all_regions.png")
-=======
 
 
 
->>>>>>> 6d13befba52ca16f6246512167b8ff9bdabe9f44
 
 
     def start(self):
